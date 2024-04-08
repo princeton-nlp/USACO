@@ -1,23 +1,17 @@
-'''
-Evaluate the given (USACO, Python 3) solution sets to get result sets.
-'''
-
 import argparse
 import time
 from datetime import datetime
 import pickle
 from collections import Counter
 
-from iml.agents import BasicAgent
-from iml.models import GPT3p5, GPT4, gpt_usage
-from iml.evaluation import evaluate_agent, evaluate_solution_sets, print_metrics
-from iml.data_utils import load_problems, load_problem_dict
+from USACOBench.evaluation import evaluate_agent, evaluate_solution_sets, print_metrics
+from USACOBench.data_utils import load_problems, load_problem_dict
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--ss', help='file path to solution sets', default='solution_sets.pickle')
-parser.add_argument('-d', '--dataset_name', help='name of problem dataset', default='usaco_v3')
+parser.add_argument('-d', '--dataset_name', help='name of problem dataset', default='usaco307')
 parser.add_argument('-v', '--verbose', action='store_true', help='whether to print result metrics')
-parser.add_argument('-m', '--mode', help='fail_fast or eval_all')
+parser.add_argument('-m', '--mode', help='fail_fast or eval_all', default='eval_all')
 parser.add_argument('-r', '--rs', help='file path to save results (default is results.pickle)', default='result_sets.pickle')
 args = parser.parse_args()
 
