@@ -1,6 +1,10 @@
-# In-Memory Learning
+# Can Language Models Solve Olympiad Programming?
 
-# Setup
+This repo holds the code and demos for "Can Language Models Solve Olympiad Programming?" by Quan Shi, Michael Tang, Karthik Narasimhan, and Shunyu Yao.
+
+![memory_retrieval](https://github.com/princeton-nlp/USACO/assets/78577924/e225d8a3-ca88-46bf-88d1-ced17241a4fa)
+
+## Setup
 
 Run
 ```
