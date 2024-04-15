@@ -36,7 +36,9 @@ Note that as more solutions are generated, the directory may become large. Optio
 
 ## Data
 
-USACO-related data (problems and problem dict) and the `cp_handbook` corpus can be downloaded [here](https://drive.google.com/drive/folders/1ZC0lVRCnlSaIo6eTjEc_vPtFJLZWbFAO?usp=sharing). For evaluation, please add `data/corpuses` and `data/datasets` directories under the repository root, and move any downloaded data to locations as described below:
+USACO-related data (problems and problem dict) and the `cp_handbook` corpus can be downloaded [here](https://drive.google.com/drive/folders/1ZC0lVRCnlSaIo6eTjEc_vPtFJLZWbFAO?usp=sharing). 
+
+Below are descriptions of the contents within the folder:
 
 * `data/corpuses/`: corpuses of competitive programming articles and book chapters (json)
     * `cpbook_v2`: [cp-algorithms book](https://cp-algorithms.com/), split into 157 articles. We currently just use `article` (raw text with problems section removed) for retrieval, but we also provide keys `title` and `full_article` (problems section included) in the corpus.
@@ -44,6 +46,7 @@ USACO-related data (problems and problem dict) and the `cp_handbook` corpus can 
 * `data/datasets/`: datasets of competitive programming problems (HuggingFace datasets)
     * `usaco_v2`: 484 USACO problems (all available problems with test cases up to September 2023)
     * `usaco307`: 307 USACO problems with python solutions, set utilized in paper
+ 
 
 ## USACO eval
 
