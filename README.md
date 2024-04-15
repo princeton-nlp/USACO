@@ -71,6 +71,6 @@ python run_usaco.py --model-name gpt-3.5-turbo -s -e
 ## Reducing Memory Usage
 Result sets are by default quite large, as they include sample inputs and outputs on test cases.
 To reduce size of result files, go to the file `USACOBench/evaluation/judges/usaco_utils.py`, and:
-1. Nncomment line 162
+1. Uncomment line 162
 2. Comment out line 163
 
