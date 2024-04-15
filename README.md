@@ -29,14 +29,18 @@ and seems less buggy than `export OPENAI_API_KEY`.
 
 ## Judge sandbox directories
 
-Local evaluation requires absolute paths — please update the global path constants at the top of the files `USACOBench/evaluation/judges/usaco_judge.py`. A good default
-is to set them to `{parent of this repository}/USACO/{copy rest of path}`.
+Local evaluation requires absolute paths — please update the global path constants at the top of the files `USACOBench/evaluation/judges/usaco_judge.py` and `USACOBench/evaluation/judges/usaco_batch_judge.py`. A good default is to set them to `{parent of this repository}/USACO/{copy rest of path}`.
 
 Note that as more solutions are generated, the directory may become large. Optionally to save space, you may also delete solutions or pickle files you no longer want at any time, as long as judging is not currently running.
 
 ## Data
 
-USACO-related data (problems and problem dict) and the `cp_handbook` corpus can be downloaded [here](https://drive.google.com/drive/folders/1ZC0lVRCnlSaIo6eTjEc_vPtFJLZWbFAO?usp=sharing). 
+USACO-related data (problems and problem dict) and the `cp_handbook` corpus can be downloaded [here](https://drive.google.com/file/d/1z5ODOJMqyer1QxzYtEUZ2hbAx-7nU8Vi/view?usp=share_link). Data files are large!
+
+Alternatively, to directly load data folder, run the following on the command line
+```
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1z5ODOJMqyer1QxzYtEUZ2hbAx-7nU8Vi' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1z5ODOJMqyer1QxzYtEUZ2hbAx-7nU8Vi" -O data.zip && rm -rf /tmp/cookies.txt
+```
 
 Below are descriptions of the contents within the folder:
 
@@ -46,7 +50,7 @@ Below are descriptions of the contents within the folder:
 * `data/datasets/`: datasets of competitive programming problems (HuggingFace datasets)
     * `usaco_v2`: 484 USACO problems (all available problems with test cases up to September 2023)
     * `usaco307`: 307 USACO problems with python solutions, set utilized in paper
- 
+
 
 ## USACO eval
 
@@ -63,3 +67,10 @@ Enabling inference methods in the paper such as Episodic Retrieval, Semantic Ret
 ```
 python run_usaco.py --model-name gpt-3.5-turbo -s -e
 ```
+
+## Reducing Memory Usage
+Result sets are by default quite large, as they include sample inputs and outputs on test cases.
+To reduce size of result files, go to the file `USACOBench/evaluation/judges/usaco_utils.py`, and:
+1. Nncomment line 162
+2. Comment out line 163
+
