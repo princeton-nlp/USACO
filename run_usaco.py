@@ -13,15 +13,19 @@ from USACOBench.data_utils import load_corpus, load_problem_dict, load_problems
 from evaluate import evaluate_model
 from USACOBench.evaluation import print_metrics
 from dotenv import load_dotenv
+from utils import run_solve, run_retrieval, run_reflexion, calculate_final_rs
 from collections import Counter
+
 load_dotenv()
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-m', '--model_name', help='model endpoint: ie. gpt-4-1106-preview', default='gpt-3.5-turbo')
-parser.add_argument('-e', '--episodic_retrieval', help='whether to use episodic retrieval', default=0)
-parser.add_argument('-s', '--semantic_retrieval', help='whether to use semantic retrieval', default=0)
-parser.add_argument('-r', '--reflexion', help='whether to use reflexion', default=0)
+parser.add_argument('-e', '--episodic_retrieval', help='whether to use episodic retrieval', action="store_true", default=False)
+parser.add_argument('-f', '--num_retrieved', help='number of documents retrieved', default=2)
+parser.add_argument('-s', '--semantic_retrieval', help='whether to use semantic retrieval', action="store_true", default=False)
+parser.add_argument('-r', '--reflexion', help='whether to use reflexion', action="store_true", default=False)
 parser.add_argument('-a', '--attempts', help='number of attempts', default=1)
+parser.add_argument('-n', '--num_reflexion', help='number of reflexion iterations', default=3)
 args = parser.parse_args()
 
 model_name = args.model_name
@@ -32,56 +36,32 @@ elif 'claude' in model_name:
 else: 
     raise Exception("Model name not one of gpt or claude. Please modify code to add model support.")
 
-problem_dict = load_problem_dict('usaco307')
+problem_dict = load_problem_dict('usaco_subset307')
 model_fn = partial(model_fn, model=model_name)
 
 if not args.episodic_retrieval and not args.semantic_retrieval and not args.reflexion:
-    queries = []
-    for problem_id in problem_dict.keys():
-        queries.append({'problem_id': problem_id, 'problem_description': problem_dict[problem_id]['description']})
-
-    rdict, sdict, rs, ss = evaluate_model(model_fn, solve_prompt_fn, queries=queries, verbose=True, attempts=1, problem_ids=list(problem_dict.keys())[:1])
-    save_json([rdict, sdict, rs, ss], f'results/results_solve_{args.attempts}attempts')
+    rdict, sdict, rs, ss = run_solve(model_fn, model_name, problem_dict, args.attempts)
     
 elif args.episodic_retrieval and not args.semantic_retrieval and not args.reflexion:
-    queries = []
-    for problem_id in problem_dict.keys():
-        queries.append({'problem_id': problem_id, 'problem_description': problem_dict[problem_id]['description']})
-
-    rdict, sdict, rs, ss = evaluate_model(model_fn, solve_prompt_fn, queries=queries, verbose=True, attempts=1, problem_ids=list(problem_dict.keys())[:1])
-    save_json([rdict, sdict, rs, ss], f'results/results_solve_{args.attempts}attempts')
-
-    num_problems_fetched = 2
-    queries = generate_episodic_retrieval_queries(num_problems_fetched, problem_dict, ss)
-    retrieval_prompt_fn = partial(retrieval_prompt_fn, retrieval_type=RetrievalType.EPISODIC)
-    rdict, sdict, rs, ss = evaluate_model(model_fn, retrieval_prompt_fn, queries=queries, verbose=True, attempts=1, problem_ids=list(problem_dict.keys())[:1])
-    save_json([rdict, sdict, rs, ss], f'results/results_episodic_retrieval_{args.attempts}attempts')
+    rdict, sdict, rs, ss = run_solve(model_fn, model_name, problem_dict, args.attempts)
+    rdict, sdict, rs, ss = run_retrieval(model_fn, model_name, problem_dict, args.attempts, ss, args.num_retrieved, RetrievalType.EPISODIC)
 
 elif not args.episodic_retrieval and args.semantic_retrieval and not args.reflexion:
-    queries = []
-    for problem_id in problem_dict.keys():
-        queries.append({'problem_id': problem_id, 'problem_description': problem_dict[problem_id]['description']})
-
-    rdict, sdict, rs, ss = evaluate_model(model_fn, solve_prompt_fn, queries=queries, verbose=True, attempts=1, problem_ids=list(problem_dict.keys())[:1])
-    save_json([rdict, sdict, rs, ss], f'results/results_solve_{args.attempts}attempts')
-
-    queries = generate_semantic_retrieval_queries(problem_dict, ss)
-    retrieval_prompt_fn = partial(retrieval_prompt_fn, retrieval_type=RetrievalType.SEMANTIC)
-    rdict, sdict, rs, ss = evaluate_model(model_fn, retrieval_prompt_fn, queries=queries, verbose=True, attempts=1, problem_ids=list(problem_dict.keys())[:1])
-    save_json([rdict, sdict, rs, ss], f'results/results_episodic_retrieval_{args.attempts}attempts')
+    rdict, sdict, rs, ss = run_solve(model_fn, model_name, problem_dict, args.attempts)
+    rdict, sdict, rs, ss = run_retrieval(model_fn, model_name, problem_dict, args.attempts, ss, args.num_retrieved, RetrievalType.SEMANTIC)
 
 elif args.episodic_retrieval and args.semantic_retrieval and not args.reflexion:
-    queries = []
-    for problem_id in problem_dict.keys():
-        queries.append({'problem_id': problem_id, 'problem_description': problem_dict[problem_id]['description']})
+    rdict, sdict, rs, ss = run_solve(model_fn, model_name, problem_dict, args.attempts)
+    rdict, sdict, rs, ss = run_retrieval(model_fn, model_name, problem_dict, args.attempts, ss, args.num_retrieved, RetrievalType.EPISODIC_SEMANTIC)
 
-    rdict, sdict, rs, ss = evaluate_model(model_fn, solve_prompt_fn, queries=queries, verbose=True, attempts=1, problem_ids=list(problem_dict.keys())[:1])
-    save_json([rdict, sdict, rs, ss], f'results/results_solve_{args.attempts}attempts')
+elif not args.episodic_retrieval and not args.semantic_retrieval and args.reflexion:
+    rdict, sdict, rs, ss, queries = run_solve(model_fn, model_name, problem_dict, args.attempts, return_queries=True)
+    reflexions = []
+    for i in range(args.num_reflexion):
+        rdict, sdict, rs, ss, queries = run_reflexion(model_fn, model_name, problem_dict, args.attempts, rdict, sdict, queries, i, return_queries=True)
+        reflexions.append(rs)
 
-    queries = generate_episodic_semantic_retrieval_queries(problem_dict, ss)
-    retrieval_prompt_fn = partial(retrieval_prompt_fn, retrieval_type=RetrievalType.EPISODIC_SEMANTIC)
-    rdict, sdict, rs, ss = evaluate_model(model_fn, retrieval_prompt_fn, queries=queries, verbose=True, attempts=1, problem_ids=list(problem_dict.keys())[:1])
-    save_json([rdict, sdict, rs, ss], f'results/results_episodic_semantic_retrieval_{args.attempts}attempts')
+    rs = calculate_final_rs(reflexions, problem_dict)
 
 print_metrics(rs)
 print('Result summary:')

@@ -9,7 +9,7 @@ from USACOBench.data_utils import load_problems, load_problem_dict
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--ss', help='file path to solution sets', default='solution_sets.pickle')
-parser.add_argument('-d', '--dataset_name', help='name of problem dataset', default='usaco307')
+parser.add_argument('-d', '--dataset_name', help='name of problem dataset', default='usaco_subset307')
 parser.add_argument('-v', '--verbose', action='store_true', help='whether to print result metrics')
 parser.add_argument('-m', '--mode', help='fail_fast or eval_all', default='eval_all')
 parser.add_argument('-r', '--rs', help='file path to save results (default is results.pickle)', default='result_sets.pickle')
