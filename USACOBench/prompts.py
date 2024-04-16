@@ -32,7 +32,7 @@ Now it's your turn. Here is the problem you are to solve:
 [END PROBLEM]"""
 
 def reflexion_prompt_fn(query, retrieval=False):
-    retrieval = ""
+    retrieval_text = ""
     if retrieval:
         retrieval_text = "You were also given a couple of similar problems to the problem above along with their solutions to aid you in solving the problem at hand. Here are the similar problems you were given:\n" + query['retrieval_text'] 
     

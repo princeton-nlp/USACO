@@ -25,7 +25,7 @@ parser.add_argument('-f', '--num_retrieved', help='number of documents retrieved
 parser.add_argument('-s', '--semantic_retrieval', help='whether to use semantic retrieval', action="store_true", default=False)
 parser.add_argument('-r', '--reflexion', help='whether to use reflexion', action="store_true", default=False)
 parser.add_argument('-a', '--attempts', help='number of attempts', default=1)
-parser.add_argument('-n', '--num_reflexion', help='number of reflexion iterations', default=3)
+parser.add_argument('-n', '--num_reflexion', help='number of reflexion iterations', default=2)
 args = parser.parse_args()
 
 model_name = args.model_name
@@ -39,9 +39,10 @@ else:
 problem_dict = load_problem_dict('usaco_subset307')
 model_fn = partial(model_fn, model=model_name)
 
+# A little redundant but it does the job and it's readable...
 if not args.episodic_retrieval and not args.semantic_retrieval and not args.reflexion:
     rdict, sdict, rs, ss = run_solve(model_fn, model_name, problem_dict, args.attempts)
-    
+
 elif args.episodic_retrieval and not args.semantic_retrieval and not args.reflexion:
     rdict, sdict, rs, ss = run_solve(model_fn, model_name, problem_dict, args.attempts)
     rdict, sdict, rs, ss = run_retrieval(model_fn, model_name, problem_dict, args.attempts, ss, args.num_retrieved, RetrievalType.EPISODIC)
@@ -55,11 +56,48 @@ elif args.episodic_retrieval and args.semantic_retrieval and not args.reflexion:
     rdict, sdict, rs, ss = run_retrieval(model_fn, model_name, problem_dict, args.attempts, ss, args.num_retrieved, RetrievalType.EPISODIC_SEMANTIC)
 
 elif not args.episodic_retrieval and not args.semantic_retrieval and args.reflexion:
-    rdict, sdict, rs, ss, queries = run_solve(model_fn, model_name, problem_dict, args.attempts, return_queries=True)
-    reflexions = []
+    rdict, sdict, rs, ss = run_solve(model_fn, model_name, problem_dict, args.attempts)
+    reflexions = [rdict]
+    query_dict = None
     for i in range(args.num_reflexion):
-        rdict, sdict, rs, ss, queries = run_reflexion(model_fn, model_name, problem_dict, args.attempts, rdict, sdict, queries, i, return_queries=True)
-        reflexions.append(rs)
+        rdict, sdict, rs, ss, query_dict = run_reflexion(model_fn, model_name, problem_dict, args.attempts, rdict, sdict, query_dict, i, return_queries=True)
+        reflexions.append(rdict)
+
+    rs = calculate_final_rs(reflexions, problem_dict)
+
+elif args.episodic_retrieval and not args.semantic_retrieval and args.reflexion:
+    rdict, sdict, rs, ss = run_solve(model_fn, model_name, problem_dict, args.attempts)
+    rdict, sdict, rs, ss = run_retrieval(model_fn, model_name, problem_dict, args.attempts, ss, args.num_retrieved, RetrievalType.EPISODIC)
+
+    reflexions = [rdict]
+    query_dict = None
+    for i in range(args.num_reflexion):
+        rdict, sdict, rs, ss, query_dict = run_reflexion(model_fn, model_name, problem_dict, args.attempts, rdict, sdict, query_dict, i, return_queries=True, retrieval=True)
+        reflexions.append(rdict)
+
+    rs = calculate_final_rs(reflexions, problem_dict)
+    
+elif not args.episodic_retrieval and args.semantic_retrieval and args.reflexion:
+    rdict, sdict, rs, ss = run_solve(model_fn, model_name, problem_dict, args.attempts)
+    rdict, sdict, rs, ss = run_retrieval(model_fn, model_name, problem_dict, args.attempts, ss, args.num_retrieved, RetrievalType.SEMANTIC)
+
+    reflexions = [rdict]
+    query_dict = None
+    for i in range(args.num_reflexion):
+        rdict, sdict, rs, ss, query_dict = run_reflexion(model_fn, model_name, problem_dict, args.attempts, rdict, sdict, query_dict, i, return_queries=True, retrieval=True)
+        reflexions.append(rdict)
+
+    rs = calculate_final_rs(reflexions, problem_dict)
+
+elif args.episodic_retrieval and args.semantic_retrieval and args.reflexion:
+    rdict, sdict, rs, ss = run_solve(model_fn, model_name, problem_dict, args.attempts)
+    rdict, sdict, rs, ss = run_retrieval(model_fn, model_name, problem_dict, args.attempts, ss, args.num_retrieved, RetrievalType.EPISODIC_SEMANTIC)
+
+    reflexions = [rdict]
+    query_dict = None
+    for i in range(args.num_reflexion):
+        rdict, sdict, rs, ss, query_dict = run_reflexion(model_fn, model_name, problem_dict, args.attempts, rdict, sdict, query_dict, i, return_queries=True, retrieval=True)
+        reflexions.append(rdict)
 
     rs = calculate_final_rs(reflexions, problem_dict)
 

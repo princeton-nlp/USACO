@@ -221,33 +221,32 @@ def generate_episodic_semantic_retrieval_queries(num_problems_fetched, problem_d
     save_json(final_queries, 'queries_firstsolve_episodic_semantic')
     return final_queries
 
-def generate_reflexion_queries(rdict, sdict, problem_dict, model_name, prev_queries, retrieval=False):
+def generate_reflexion_queries(rdict, sdict, problem_dict, model_name, iteration, prev_queries_dict=None, retrieval=False):
     reflection_queries_dict = dict()
-    prev_queries_dict = dict()
-    for query in prev_queries:
-        prev_queries_dict[query['problem_id']] = query
 
-    # Extracting Original Response
     for problem_id in sdict.keys():
         if problem_id in problem_dict.keys():
             for solution in sdict[problem_id][:1]:
-                original_response = solution['solution']
+                prev_buffer = ''
+                if prev_queries_dict:
+                    prev_buffer = prev_queries_dict[problem_id]['reflection_buffer']
+                current_response = solution['solution']
+                current_execution_output = rdict[solution['problem_id']][0]['result_list']
                 num_samples = problem_dict[problem_id]['description'].count("SAMPLE INPUT")
-                unparsed_execution_output = rdict[problem_id][0]['result_list']
                 execution_output = ""
-                if unparsed_execution_output:
-                    unparsed_execution_output = unparsed_execution_output[:num_samples]
-                    for i, result in enumerate(unparsed_execution_output):
+                if current_execution_output:
+                    current_execution_output = current_execution_output[:num_samples]
+                    for i, result in enumerate(current_execution_output):
                         execution_output += f"Test Case {i}\n" + result['status'] + "\n"
                 else:
                     execution_output = "No submission, formatting error during judging."
+
                 if retrieval:
                     retrieval_text = prev_queries_dict[problem_id]['retrieval_text']
                     retrieval_problem_ids = prev_queries_dict[problem_id]['retrieval_problem_ids']
-                    reflection_queries_dict[problem_id] = {'problem_id': problem_id, 'original_response': original_response, 'execution_response': execution_output, 'retrieval_text': retrieval_text, 'retrieval_problem_ids': retrieval_problem_ids, 'problem_description': problem_dict[problem_id]['description']}
+                    reflection_queries_dict[problem_id] = {'problem_id': problem_id, 'reflection_buffer': prev_buffer + f'\n Reflection Response Number {iteration+1}: \n' + current_response + f'\n Reflection Response Execution Output Number {iteration+1}:\n' + execution_output, 'retrieval_text': retrieval_text, 'retrieval_problem_ids': retrieval_problem_ids, 'problem_description': problem_dict[problem_id]['description']}
                 else:
-                    reflection_queries_dict[problem_id] = {'problem_id': problem_id, 'original_response': original_response, 'execution_response': execution_output, 'problem_description': problem_dict[problem_id]['description']}
-    
+                    reflection_queries_dict[problem_id] = {'problem_id': problem_id, 'reflection_buffer': prev_buffer + f'\n Reflection Response Number {iteration+1} \n' + current_response + f'\n Reflection Response Execution Output Number {iteration+1}:\n' + execution_output, 'problem_description': problem_dict[problem_id]['description']}
     if retrieval:
         name = f'queries_dict_{model_name}_retrieval_reflexion'
     else:
@@ -257,7 +256,7 @@ def generate_reflexion_queries(rdict, sdict, problem_dict, model_name, prev_quer
 
 def calculate_final_rs(reflexions, problem_dict):
     rs = []
-    for problem_id in problem_dict.keys():
+    for problem_id in reflexions[0].keys():
         num_samples = problem_dict[problem_id]['description'].count('SAMPLE INPUT')
         for i, reflexion_result in enumerate(reflexions):
             if reflexion_result[problem_id][0]['result_list']:
@@ -288,7 +287,7 @@ def run_solve(model_fn, model_name, problem_dict, attempts, return_queries=False
     for problem_id in problem_dict.keys():
         queries.append({'problem_id': problem_id, 'problem_description': problem_dict[problem_id]['description']})
 
-    rdict, sdict, rs, ss = evaluate_model(model_fn, solve_prompt_fn, queries=queries, verbose=True, attempts=attempts, problem_ids=list(problem_dict.keys()))
+    rdict, sdict, rs, ss = evaluate_model(model_fn, solve_prompt_fn, queries=queries, verbose=True, attempts=attempts, problem_ids=list(problem_dict.keys())[:2])
     save_json([rdict, sdict, rs, ss], f'results/results_{model_name}_solve_{attempts}attempts')
     return (rdict, sdict, rs, ss) if not return_queries else (rdict, sdict, rs, ss, queries)
 
@@ -306,9 +305,9 @@ def run_retrieval(model_fn, model_name, problem_dict, attempts, solution_sets, n
 
     return (rdict, sdict, rs, ss) if not return_queries else (rdict, sdict, rs, ss, queries)
 
-def run_reflexion(model_fn, model_name, problem_dict, attempts, prev_result_dict, prev_solution_dict, prev_queries, iteration, return_queries=True):
-    new_reflexion_queries = generate_reflexion_queries(prev_result_dict, prev_solution_dict, problem_dict, model_name, prev_queries)
-    rdict, sdict, rs, ss = evaluate_model(model_fn, reflexion_prompt_fn, queries=new_reflexion_queries, verbose=True, attempts=attempts, problem_ids=list(problem_dict.keys()))
+def run_reflexion(model_fn, model_name, problem_dict, attempts, prev_result_dict, prev_solution_dict, prev_queries_dict, iteration, return_queries=True, retrieval=False):
+    new_reflexion_queries_dict = generate_reflexion_queries(prev_result_dict, prev_solution_dict, problem_dict, model_name, iteration, prev_queries_dict=prev_queries_dict, retrieval=retrieval)
+    rdict, sdict, rs, ss = evaluate_model(model_fn, reflexion_prompt_fn, queries=list(new_reflexion_queries_dict.values()), verbose=True, attempts=attempts)
     save_json([rdict, sdict, rs, ss], f'results_{model_name}_reflexion_{str(iteration)}iteration')
 
-    return (rdict, sdict, rs, ss) if not return_queries else (rdict, sdict, rs, ss, new_reflexion_queries)
+    return (rdict, sdict, rs, ss) if not return_queries else (rdict, sdict, rs, ss, new_reflexion_queries_dict)
