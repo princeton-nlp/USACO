@@ -63,7 +63,7 @@ python run_usaco.py --model-name gpt-3.5-turbo
 To replicate open source models, create a model_fn following formatting in `USACOBench/models/gpts.py`. 
 
 
-Enabling inference methods in the paper such as Episodic Retrieval, Semantic Retrieval, and Reflexion is as simple as passing in the corresponding flags. For example, to run a combination of Episodic and Semantic Retrieval given 3 attempts, run
+Enabling inference methods in the paper such as Episodic Retrieval, Semantic Retrieval, and Reflexion is as simple as passing in the corresponding flags. For example, to run a combination of Episodic and Semantic Retrieval, run
 ```
 python run_usaco.py --model-name gpt-3.5-turbo -s -e
 ```
