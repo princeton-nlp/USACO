@@ -29,7 +29,7 @@ and seems less buggy than `export OPENAI_API_KEY`.
 
 ## Judge sandbox directories
 
-Local evaluation requires absolute paths — please update the global path constants at the top of the files `USACOBench/evaluation/judges/usaco_judge.py` and `USACOBench/evaluation/judges/usaco_batch_judge.py`. A good default is to set them to `{parent of this repository}/USACO/{copy rest of path}`.
+Local evaluation requires absolute paths — please update the global path constants at the top of the files `USACOBench/evaluation/judges/usaco_judge.py`, `USACOBench/evaluation/judges/usaco_batch_judge.py`, and `USACOBench/evaluation/judges/usaco_utils.py`. A good default is to set them to `{parent of this repository}/USACO/{copy rest of path}`.
 
 Note that as more solutions are generated, the directory may become large. Optionally to save space, you may also delete solutions or pickle files you no longer want at any time, as long as judging is not currently running.
 
