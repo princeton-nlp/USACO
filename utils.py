@@ -287,7 +287,7 @@ def run_solve(model_fn, model_name, problem_dict, attempts, return_queries=False
     for problem_id in problem_dict.keys():
         queries.append({'problem_id': problem_id, 'problem_description': problem_dict[problem_id]['description']})
 
-    rdict, sdict, rs, ss = evaluate_model(model_fn, solve_prompt_fn, queries=queries, verbose=True, attempts=attempts, problem_ids=list(problem_dict.keys())[:2])
+    rdict, sdict, rs, ss = evaluate_model(model_fn, solve_prompt_fn, queries=queries, verbose=True, attempts=attempts, problem_ids=list(problem_dict.keys()))
     save_json([rdict, sdict, rs, ss], f'results/results_{model_name}_solve_{attempts}attempts')
     return (rdict, sdict, rs, ss) if not return_queries else (rdict, sdict, rs, ss, queries)
 
